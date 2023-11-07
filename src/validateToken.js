@@ -1,6 +1,9 @@
 const https = require('https');
+require('dotenv').config();
+const { refreshAccessToken } = require('./refreshToken');
+const { getAccessToken } = require("./getAccessToken");
 
-function validateAccessToken(token) {
+function validateAccessToken(token, refreshToken) {
     let options = {
         hostname: 'id.twitch.tv',
         path: '/oauth2/validate',
@@ -9,26 +12,30 @@ function validateAccessToken(token) {
             Authorization: 'OAuth ' + token
         }
     }
-    https.get(options, (resp) => {
-        let data = '';
-        // A chunk of data has been recieved.
-        resp.on('data', (chunk) => {
-            data += chunk;
-        });
+    return new Promise( (resolve,reject) => {
+        https.get(options, (resp) => {
+            let data = '';
+            // A chunk of data has been received.
+            resp.on('data', (chunk) => {
+                data += chunk;
+            });
 
-        resp.on('end',() => {
-            let jsonResponse = JSON.parse(data);
-            console.log(jsonResponse)
+            resp.on('end', () => {
+                let jsonResponse = JSON.parse(data);
+                if (jsonResponse['status'] === 401) {
+                    refreshAccessToken(refreshToken).then(tokenData => {
+                        resolve(tokenData);
+                    }).catch(() => {
+                        getAccessToken(process.env.CODEBOT).then( tokenData => {
+                            resolve(tokenData);
+                        }).catch(err => {
+                            reject(err);
+                        })
+                    })
+                }
+            })
         })
-        // console.log(resp);
-        // console.log(resp.statusCode, resp.statusMessage);
-        // let JsonData = JSON.parse(data);
-        // console.log(JsonData);
-        // return JsonData;
-        // The whole response has been received. Print out the result.
-        // let jsonResponse = JSON.parse(data);
-        // console.log(jsonResponse);
     })
 }
 
-module.exports = { validateAccessToken }
+module.exports = { validateAccessToken };

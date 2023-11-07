@@ -27,14 +27,6 @@ async function refreshAccessToken(refreshToken ) {
             resp.on('error', (err) => {
                 console.log(err);
             });
-
-            // console.log(resp.statusCode, resp.statusMessage);
-            // let JsonData = JSON.parse(data);
-            // console.log(JsonData);
-            // return JsonData;
-            // The whole response has been received. Print out the result.
-            // let jsonResponse = JSON.parse(data);
-            // console.log(jsonResponse);
         })
     })
 }

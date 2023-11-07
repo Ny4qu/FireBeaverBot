@@ -7,13 +7,13 @@ function randomChoice(mn, mx) {
     return Math.random() * (mx - mn) + mn;
 }
 
-async function getChatters(tokenData, channel) {
+async function getChatters(accessToken, channel) {
     let options = {
         hostname: 'api.twitch.tv',
         path: '/helix/chat/chatters?broadcaster_id=' + channel + '&moderator_id=' + process.env.BOTID + '&first=999' + ((pages !== true) ? '' : "&after=" + paginationKey),
         method: 'GET',
         headers: {
-            "Authorization": 'Bearer ' + tokenData.access_token,
+            "Authorization": 'Bearer ' + accessToken,
             "Client-Id": process.env.CLIENT_ID,
             'Content-Type': 'application/json',
         },
@@ -21,7 +21,7 @@ async function getChatters(tokenData, channel) {
 
     return new Promise((resolve, reject) => {
         https.get(options, (resp) => {
-            // A chunk of data has been recieved.
+            // A chunk of data has been received.
             let data = '';
             resp.on('data', (chunk) => {
                 data += chunk;
@@ -44,23 +44,37 @@ async function getChatters(tokenData, channel) {
     })
 }
 
-async function beerThief(userID,channel,tokenData) {
+async function beerThief(userID,channel,accessToken) {
+    let rejectResponse = true;
     switch(channel) {
         case 'nyaqu': channel = process.env.STREAMERID; break;
         case '9impulse': channel = process.env.STREAMERIMPULSE; break;
     }
     let chattersArray = [];
-    chattersArray = await getChatters(tokenData, channel);
+    await getChatters(accessToken, channel).then(users => {
+        chattersArray = users;
+    }).catch(err => {
+        rejectResponse = {...err};
+    });
+
     while(pages) {
-        chattersArray = chattersArray.concat(await getChatters(tokenData, channel));
+        await getChatters(accessToken, channel).then(users => {
+            chattersArray = chattersArray.concat(users);
+        }).catch(err => {
+            rejectResponse = {...err};
+        });
     }
     pages = true;
     paginationKey = "";
     return new Promise( (resolve,reject) => {
-        resolve({
-            "name" : chattersArray[Math.floor(randomChoice(1, totalRows)) - 1].user_name,
-            "amount" : Math.floor(randomChoice(1,101)),
-        });
+        if(rejectResponse === true) {
+            resolve({
+                "name" : chattersArray[Math.floor(randomChoice(1, totalRows)) - 1].user_name,
+                "amount" : Math.floor(randomChoice(1,101)),
+            });
+        } else {
+            reject(rejectResponse);
+        }
     })
 }
 

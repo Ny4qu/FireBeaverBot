@@ -1,5 +1,4 @@
 const tmi = require('tmi.js');
-const fs = require('fs');
 require('dotenv').config();
 const { getAccessToken } = require('./getAccessToken');
 const { validateAccessToken } = require('./validateToken');
@@ -7,10 +6,7 @@ const { refreshAccessToken } = require('./refreshToken');
 const { randomTimeOut } = require('./randomTimeOut');
 const { beerThief } = require('./beerThief');
 const { ballAnswers } = require('./ball8answers');
-const { vanishTimeOut } = require('./vanish');
 const { rangeTimeOut } = require("./rangeTimeOut");
-const { checkCoolDown } = require("./coldownCommands");
-const { typesTranslate } = require("../assets/tweaks");
 const { emoteTimeOut } = require("./streakOut");
 
 let streamerTokenData = {};
@@ -29,18 +25,18 @@ const client = new tmi.Client({
 });
 
 refreshAccessToken(process.env.REFRESHTOKENSTREAMER).then( value => {
-    streamerTokenData = value;
+    streamerTokenData = {...value};
     refreshAccessToken(process.env.REFRESHTOKENBOT).then( value => {
-        botTokenData = value;
-    }).catch(err => {
+        botTokenData = {...value};
+    }).catch(() => {
         getAccessToken(process.env.CODEBOT).then( value => {
-            botTokenData = value;
+            botTokenData = {...value};
         })
     })
     client.connect();
-}).catch(err => {
+}).catch(() => {
     getAccessToken(process.env.CODEACCESS).then( value => {
-        streamerTokenData = value;
+        streamerTokenData = {...value};
     })
 })
 
@@ -55,10 +51,19 @@ client.on('message', (channel, tags, message, self) => {
             if(badges.includes('moderator')) {
                 client.say(channel,tags['display-name'] + ' модератор прервал стрик unmod');
             } else {
-                emoteTimeOut(tags['user-id'], 60, emoteCounter, channel.replace('#',''), botTokenData).then(value => {
+                emoteTimeOut(tags['user-id'], 60, emoteCounter, channel.replace('#',''), botTokenData['access_token']).then(value => {
                     client.say(channel, tags['display-name'] + " " + value);
-                }).catch(err => {
-                    client.say(channel, tags['display-name'] + " " + err);
+                }).catch(() => {
+                    validateAccessToken(botTokenData['access_token'],botTokenData['refresh_token']).then((tokenData) => {
+                        botTokenData = {...tokenData};
+                        emoteTimeOut(tags['user-id'], 60, emoteCounter, channel.replace('#',''), botTokenData['access_token']).then(value => {
+                            client.say(channel, tags['display-name'] + " " + value);
+                        }).catch((err) => {
+                            console.log("ERROR: Error on getting token" + JSON.stringify(err));
+                        });
+                    }).catch((err) => {
+                        console.log("ERROR: Unable to validate or get Access" + JSON.stringify(err));
+                    })
                 })
             }
         }
@@ -67,7 +72,6 @@ client.on('message', (channel, tags, message, self) => {
     }
 
     if(message.startsWith('!')) {
-        let timeNow = new Date().getTime() / 1000;
         let channelName = channel.replace('#','');
         let message_array = message.trim().slice(1).split(' ');
         switch(message_array[0].toLowerCase()) {
@@ -83,39 +87,48 @@ client.on('message', (channel, tags, message, self) => {
                     } else {
                         amount = isNaN(message_array[1]) ? 180 : message_array[1];
                     }
-                    randomTimeOut(tags['user-id'], amount, channelName, botTokenData).then(value => {
+                    randomTimeOut(tags['user-id'], amount, channelName, botTokenData['access_token']).then(value => {
                         client.say(channel, tags['display-name'] + " " + value);
-                    }).catch(err => {
-                        client.say(channel, tags['display-name'] + " " + err);
+                    }).catch(() => {
+                        validateAccessToken(botTokenData['access_token'],botTokenData['refresh_token']).then((tokenData) => {
+                            botTokenData = {...tokenData};
+                            randomTimeOut(tags['user-id'], amount, channelName, botTokenData['access_token']).then(value => {
+                                client.say(channel, tags['display-name'] + " " + value);
+                            }).catch((err) => {
+                                console.log("ERROR: Error on getting token" + JSON.stringify(err));
+                            });
+                        }).catch((err) => {
+                            console.log("ERROR: Unable to validate or get Access" + JSON.stringify(err));
+                        })
                     })
                 }
                 break;
             }
 			case 'пиво':
             case 'beer': {
-                beerThief(tags['user-id'], channelName ,botTokenData).then(value => {
+                beerThief(tags['user-id'], channelName , botTokenData['access_token']).then(value => {
                     if(Math.floor(Math.random() * 2)) {
                         client.say(channel, ".me " + tags["display-name"] + " EZ украл у " + value.name + " widePeepoShortMad " + value.amount + " банок пива ppBeerBounce");
                     } else {
                         client.say(channel, ".me " + tags["display-name"] + " Otvali отдал " + value.name + " widePeepoShortMad " + value.amount + " банок пива ppBeerBounce");
                     }
                 }).catch(err => {
-                    if(err.error === 'Unauthorized') {
-                        refreshAccessToken(process.env.REFRESHTOKENBOT).then( value => {
-                            botTokenData = value;
-                            beerThief(tags['user-id'], channelName ,botTokenData).then(value => {
-                                if(Math.floor(Math.random() * 2)) {
-                                    client.say(channel, ".me " + tags["display-name"] + " EZ украл у " + value.name + " widePeepoShortMad " + value.amount + " банок пива ppBeerBounce");
-                                } else {
-                                    client.say(channel, ".me " + tags["display-name"] + " Otvali отдал " + value.name + " widePeepoShortMad " + value.amount + " банок пива ppBeerBounce");
-                                }
-                            })
-                        }).catch(err => {
-                            getAccessToken(process.env.CODEBOT).then( value => {
-                                botTokenData = value;
-                            })
-                        })
-                    }
+                   if(err['status'] >= 400){
+                       validateAccessToken(botTokenData['access_token'],botTokenData['refresh_token']).then((tokenData) => {
+                           botTokenData = {...tokenData};
+                           beerThief(tags['user-id'], channelName ,botTokenData['access_token']).then(value => {
+                               if(Math.floor(Math.random() * 2)) {
+                                   client.say(channel, ".me " + tags["display-name"] + " EZ украл у " + value.name + " widePeepoShortMad " + value.amount + " банок пива ppBeerBounce");
+                               } else {
+                                   client.say(channel, ".me " + tags["display-name"] + " Otvali отдал " + value.name + " widePeepoShortMad " + value.amount + " банок пива ppBeerBounce");
+                               }
+                           }).catch((err) => {
+                               console.log("ERROR: Error on getting token " + JSON.stringify(err));
+                           });
+                       }).catch((err) => {
+                           console.log("ERROR: Unable to validate or get Access" + JSON.stringify(err));
+                       })
+                   }
                 });
                 break;
             }
@@ -126,13 +139,23 @@ client.on('message', (channel, tags, message, self) => {
                 break;
             }
             case 'скучно': {
-                rangeTimeOut(tags['user-id'], channelName ,botTokenData).then(value => {
+                rangeTimeOut(tags['user-id'], channelName ,botTokenData['access_token']).then(() => {
+                    client.say(channel, tags["display-name"] + " Пошел смотреть аниме с Кирчиком");
+                }).catch(() => {
+                    validateAccessToken(botTokenData['access_token'],botTokenData['refresh_token']).then((tokenData) => {
+                        botTokenData = {...tokenData};
+                        rangeTimeOut(tags['user-id'], channelName ,botTokenData).then(() => {
 
-                }).catch(err => {
-
+                        }).catch((err) => {
+                            console.log("ERROR: Error on getting token" + JSON.stringify(err));
+                        });
+                    }).catch((err) => {
+                        console.log("ERROR: Unable to validate or get Access" + JSON.stringify(err));
+                    })
                 })
                 break;
             }
+            //TODO: Coin Flip command
         }
     }
 });
@@ -141,4 +164,5 @@ process.on('SIGINT', async function() {
     console.log('About to exit');
     process.exit();
 });
+
 

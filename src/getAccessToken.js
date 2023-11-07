@@ -15,7 +15,7 @@ function getAccessToken() {
                 data += chunk;
             });
             resp.on('error', (err) => {
-                console.log(err);
+                reject(err);
             });
 
             resp.on('end', () => {

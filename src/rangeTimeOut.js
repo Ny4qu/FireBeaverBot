@@ -4,7 +4,7 @@ function randomChoice(mn, mx) {
     return Math.random() * (mx - mn) + mn;
 }
 
-function rangeTimeOut(userID, channel,tokenData) {
+function rangeTimeOut(userID, channel,accessToken) {
 	switch(channel) {
 		case 'nyaqu': channel = process.env.STREAMERID; break;
 		case '9impulse': channel = process.env.STREAMERIMPULSE; break;		
@@ -24,7 +24,7 @@ function rangeTimeOut(userID, channel,tokenData) {
         path: '/helix/moderation/bans?broadcaster_id=' + channel + '&moderator_id=' + process.env.BOTID,
         method: 'POST',
         headers: {
-            "Authorization": 'Bearer ' + tokenData.access_token,
+            "Authorization": 'Bearer ' + accessToken,
             'Client-Id': process.env.CLIENT_ID,
             'Content-Type': 'application/json',
         },
