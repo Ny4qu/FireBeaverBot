@@ -132,12 +132,14 @@ client.on('message', (channel, tags, message, self) => {
                 });
                 break;
             }
+			case 'question':
             case 'вопрос': {
                 ballAnswers().then(response => {
                     client.say(channel, tags["display-name"] + " " + response);
                 })
                 break;
             }
+			case 'boring':
             case 'скучно': {
                 rangeTimeOut(tags['user-id'], channelName ,botTokenData['access_token']).then(() => {
                     client.say(channel, tags["display-name"] + " Пошел смотреть аниме с Кирчиком");
@@ -155,7 +157,15 @@ client.on('message', (channel, tags, message, self) => {
                 })
                 break;
             }
-            //TODO: Coin Flip command
+			case 'flip':
+            case 'монетка':{
+                if(Math.root(Math.random() * 2)) {
+                    client.say(channel, tags["display-name"] + " ⚪ (Орел)");
+                } else {
+                    client.say(channel, tags["display-name"] + " ⚫ (Решка)");
+                }
+                break;
+            }
         }
     }
 });
