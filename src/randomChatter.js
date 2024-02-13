@@ -44,7 +44,7 @@ async function getChatters(accessToken, channel) {
     })
 }
 
-async function beerThief(userID,channel,accessToken) {
+async function beerThief(userID, channel, accessToken) {
     let rejectResponse = true;
     switch(channel) {
         case 'nyaqu': channel = process.env.STREAMERID; break;
@@ -65,11 +65,12 @@ async function beerThief(userID,channel,accessToken) {
         });
     }
     pages = true;
+    let totalRows = 0;
     paginationKey = "";
     return new Promise( (resolve,reject) => {
         if(rejectResponse === true) {
             resolve({
-                "name" : chattersArray[Math.floor(randomChoice(1, totalRows)) - 1].user_name,
+                "name" : chattersArray[Math.floor(randomChoice(0, totalRows))].user_name,
                 "amount" : Math.floor(randomChoice(1,101)),
             });
         } else {
