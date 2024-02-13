@@ -29,7 +29,7 @@ function checkCoolDown(command) {
 async function isStreamOnline(accessToken) {
     let options = {
         hostname: 'api.twitch.tv',
-        path: 'helix/streams?user_login=nyaqu',
+        path: 'helix/streams?user_login=9impulse',
         method: 'GET',
         headers: {
             'Client-Id': process.env.CLIENT_ID,
@@ -46,7 +46,7 @@ async function isStreamOnline(accessToken) {
             });
             res.on('end', () => {
                 let jsonResponse = JSON.parse(data);
-                if(jsonResponse.data[0] === undefined) {
+                if(jsonResponse.data.length === 0) {
                     resolve(false);
                 } else if(jsonResponse.data[0]['type'] === 'live') {
                     resolve(true);

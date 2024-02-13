@@ -67,7 +67,7 @@ client.on('connected', () => {
                                 })
                             })
                         }))
-                    }, 60 * 1000);
+                    }, 60 * 60 * 1000);
                 } else {
                     streamStatus = true;
                 }
