@@ -1,7 +1,7 @@
 const https = require("https");
 let cooldownCommands = {
     "пиво": 0,
-    "охота": 0,
+    "правила": 0,
     "вопрос": 0,
     "создатель": 0,
     'help': 0,
@@ -9,7 +9,7 @@ let cooldownCommands = {
 }
 let cooldownForCommands = {
     "пиво": 3,
-    "охота": 15,
+    "правила": 15,
     "вопрос": 5,
     "создатель": 5,
     'help': 15,
